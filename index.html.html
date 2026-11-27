@@ -1,0 +1,1230 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#08090b">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="7K Timer">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>7 Kings CrossFit — Workout Timer</title>
+<style>
+:root{
+  --red:#e3232b;
+  --red-dark:#b81920;
+  --green:#2ecc71;
+  --rest:#66d18f;
+  --bg:#08090b;
+  --panel:#14161a;
+  --panel-2:#1c1f25;
+  --border:#292c33;
+  --muted:#a6aab2;
+  --white:#f5f6f7;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--white);font-family:Arial,Helvetica,sans-serif;min-height:100dvh}
+button,select,input{font:inherit}
+button{
+  border:1px solid #383b42;
+  background:#24262b;
+  color:var(--white);
+  border-radius:10px;
+  padding:10px 14px;
+  cursor:pointer;
+  font-weight:700;
+  transition:border-color .15s,background-color .15s,transform .08s,opacity .15s;
+}
+button:hover:not(:disabled){border-color:var(--red)}
+button:active:not(:disabled){transform:scale(.98)}
+button.primary{background:var(--red);border-color:var(--red);color:#fff}
+button.primary:hover:not(:disabled){background:#f02b34;border-color:#f02b34}
+button:disabled{opacity:.42;cursor:not-allowed}
+
+/* ===== VISIBILITÀ PAGINE ===== */
+.page{display:none}
+body.page-settings #settingsPage{display:flex}
+body.page-timer{overflow:hidden}
+body.page-timer #timerPage{display:grid}
+
+/* =========================================================
+   PAGINA 1 — IMPOSTAZIONI (stile CrossHero, centrata)
+   ========================================================= */
+#settingsPage{
+  min-height:100dvh;
+  flex-direction:column;
+  background:radial-gradient(ellipse at top,#171a20 0%,var(--bg) 60%);
+}
+.top-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:14px clamp(14px,3vw,28px);
+  border-bottom:1px solid #22252b;
+  gap:12px;
+  background:rgba(8,9,11,.85);
+  backdrop-filter:blur(8px);
+  position:sticky;
+  top:0;
+  z-index:10;
+}
+.brand{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  font-weight:900;
+  letter-spacing:2px;
+  min-width:0;
+}
+.brand img{height:44px;max-width:150px;object-fit:contain;display:block}
+.brandtext{
+  font-size:clamp(18px,2.5vw,32px);
+  font-weight:900;
+  line-height:1;
+  letter-spacing:2px;
+  white-space:nowrap;
+  color:#fff;
+  text-shadow:0 2px 12px rgba(0,0,0,.55);
+}
+.headerbuttons{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.headerbuttons button{padding:9px 13px;font-size:13px}
+
+.settings-wrap{
+  width:100%;
+  max-width:860px;
+  margin:0 auto;
+  padding:clamp(16px,3vw,32px) clamp(14px,3vw,24px) 36px;
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  gap:18px;
+}
+
+.section-card{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:16px;
+  padding:clamp(16px,2.4vw,24px);
+}
+.section-title{
+  margin:0 0 14px;
+  font-size:13px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:2px;
+  color:var(--red);
+}
+
+/* Griglia selettore modalità */
+.mode-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(135px,1fr));
+  gap:10px;
+}
+.mode-card{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  justify-content:center;
+  gap:4px;
+  padding:14px 14px;
+  border-radius:12px;
+  background:#0d0f13;
+  border:1px solid #2c3038;
+  text-align:left;
+  min-height:66px;
+}
+.mode-card .m-name{
+  font-size:15px;
+  font-weight:900;
+  letter-spacing:1px;
+  text-transform:uppercase;
+  color:#fff;
+}
+.mode-card .m-desc{
+  font-size:11px;
+  font-weight:600;
+  color:var(--muted);
+}
+.mode-card.active{
+  background:rgba(227,35,43,.14);
+  border-color:var(--red);
+  box-shadow:0 0 0 1px var(--red) inset;
+}
+.mode-card.active .m-desc{color:#ffd2d4}
+
+/* Campi dinamici */
+label{
+  display:block;
+  color:#cfd2d8;
+  font-size:12px;
+  font-weight:700;
+  text-transform:uppercase;
+  letter-spacing:1px;
+  margin:0 0 6px;
+}
+.field-group{margin-bottom:14px}
+.field-group:last-child{margin-bottom:0}
+.row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+input[type="number"]{
+  width:100%;
+  background:#090a0c;
+  border:1px solid #383b42;
+  color:#fff;
+  padding:12px 14px;
+  border-radius:10px;
+  font-size:18px;
+  font-weight:800;
+  outline:none;
+}
+input[type="number"]:focus{border-color:var(--red)}
+
+.presets{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-top:12px;
+}
+.presets button{
+  padding:8px 14px;
+  font-size:13px;
+  background:#1b1e24;
+  border-color:#343842;
+  border-radius:999px;
+}
+.presets button.chip-active{
+  background:rgba(227,35,43,.18);
+  border-color:var(--red);
+  color:#fff;
+}
+
+.delay-row{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  flex-wrap:wrap;
+}
+.delay-row input{max-width:120px}
+.delay-chips{display:flex;gap:8px;flex-wrap:wrap}
+.delay-chips button{
+  padding:8px 13px;
+  font-size:13px;
+  border-radius:999px;
+  background:#1b1e24;
+}
+.delay-chips button.chip-active{
+  background:rgba(227,35,43,.18);
+  border-color:var(--red);
+}
+
+.hint{
+  color:var(--muted);
+  font-size:13px;
+  margin:6px 0 0;
+  line-height:1.4;
+}
+
+/* Barra riepilogo + CTA principale */
+.launch-bar{
+  background:linear-gradient(135deg,#181b21 0%,#121418 100%);
+  border:1px solid var(--border);
+  border-radius:16px;
+  padding:16px 20px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+  flex-wrap:wrap;
+}
+.summary-info{display:flex;flex-direction:column;gap:4px}
+.summary-label{font-size:11px;font-weight:800;letter-spacing:1.6px;text-transform:uppercase;color:var(--muted)}
+.summary-text{font-size:clamp(16px,2vw,20px);font-weight:900;letter-spacing:.6px;color:#fff}
+.go-timer-btn{
+  padding:16px 28px;
+  font-size:18px;
+  font-weight:900;
+  letter-spacing:1.4px;
+  border-radius:12px;
+  min-width:220px;
+  box-shadow:0 8px 24px rgba(227,35,43,.28);
+}
+
+/* =========================================================
+   PAGINA 2 — TIMER FULLSCREEN (PC & MOBILE)
+   ========================================================= */
+#timerPage{
+  position:fixed;
+  inset:0;
+  width:100dvw;
+  height:100dvh;
+  background:radial-gradient(ellipse at center,#1a1d24 0%,#08090b 75%);
+  grid-template-rows:auto 1fr auto;
+  grid-template-columns:100%;
+  overflow:hidden;
+  padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
+.timer-topbar{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding:clamp(10px,1.8vh,18px) clamp(12px,2.5vw,26px);
+  z-index:5;
+  background:linear-gradient(to bottom,rgba(8,9,11,.75),transparent);
+}
+.timer-topbar .brand img{height:clamp(28px,4vh,42px)}
+.timer-topbar .brandtext{font-size:clamp(15px,2.4vw,30px);letter-spacing:2px}
+.topbar-actions{display:flex;gap:8px;align-items:center}
+.topbar-btn{
+  padding:9px 14px;
+  font-size:13px;
+  background:rgba(28,31,37,.85);
+  border-color:#353944;
+  white-space:nowrap;
+}
+.topbar-btn.muted{color:var(--muted);border-color:#2c3038}
+
+.timerpanel{
+  display:grid;
+  grid-template-rows:1fr auto 1fr;
+  grid-template-columns:100%;
+  justify-items:center;
+  align-items:center;
+  width:100%;
+  height:100%;
+  min-height:0;
+  padding:0 clamp(10px,2.5vw,28px);
+  text-align:center;
+  container-type:inline-size;
+}
+.phase{
+  grid-row:1;
+  align-self:end;
+  padding-bottom:clamp(4px,1.2vh,16px);
+  color:var(--red);
+  font-size:clamp(24px,4.5vw,66px);
+  font-weight:900;
+  letter-spacing:4px;
+  text-transform:uppercase;
+  line-height:1.1;
+}
+.timerpanel.rest .phase{color:var(--rest)}
+.timerpanel.running .phase{color:#fff}
+.timerpanel.work .phase{color:var(--red)}
+.timerpanel.paused .phase{color:#f1c40f}
+
+.countwrap{
+  grid-row:2;
+  width:100%;
+  display:grid;
+  place-items:center;
+  position:relative;
+  --d:min(54cqw,48dvh);
+}
+.countwrap .time{
+  font-weight:900;
+  font-variant-numeric:tabular-nums;
+  line-height:.92;
+  white-space:nowrap;
+  text-align:center;
+  font-size:min(30cqw,40dvh);
+  color:#fff;
+  z-index:1;
+  transition:color .18s;
+}
+.count-ring{
+  position:absolute;
+  top:0;
+  left:0;
+  width:var(--d);
+  height:var(--d);
+  transform:rotate(-90deg);
+  opacity:0;
+  transition:opacity .15s;
+  pointer-events:none;
+}
+.count-ring circle{
+  fill:none;
+  stroke:var(--red);
+  stroke-width:3.5;
+  stroke-linecap:round;
+}
+.countwrap.counting{
+  width:var(--d);
+  height:var(--d);
+}
+.countwrap.counting .count-ring{opacity:1}
+.countwrap.counting .time{
+  font-size:calc(var(--d) * .58);
+  line-height:1;
+  height:var(--d);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.timerpanel.running .time{color:#fff}
+.timerpanel.rest .time{color:var(--rest)}
+.timerpanel.work .time{color:var(--red)}
+.timerpanel.finished .time{color:var(--red)}
+
+.below{
+  grid-row:3;
+  align-self:start;
+  width:100%;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  padding-top:clamp(8px,1.6vh,20px);
+  gap:clamp(6px,1.2vh,14px);
+}
+.pbar{
+  width:min(82%,880px);
+  height:clamp(10px,1.9dvh,22px);
+  background:#23262b;
+  border:1px solid #33363d;
+  border-radius:999px;
+  overflow:hidden;
+}
+.pbar>div{
+  height:100%;
+  width:0%;
+  background:var(--green);
+  border-radius:999px;
+  transition:background-color .25s;
+}
+.pbar>div.danger{background:var(--red)}
+.pbar.off{visibility:hidden}
+
+.sub{
+  color:var(--white);
+  font-size:clamp(16px,3vw,46px);
+  font-weight:800;
+  letter-spacing:2px;
+  text-transform:uppercase;
+  line-height:1.15;
+  max-width:95%;
+}
+.round{
+  font-size:clamp(22px,3.6vw,54px);
+  font-weight:900;
+  letter-spacing:2px;
+  color:#fff;
+}
+.timerpanel.emom-mode .round,
+.timerpanel.tabata-mode .round,
+.timerpanel.interval-mode .round{
+  font-size:clamp(30px,5.2vw,84px);
+  letter-spacing:1.5px;
+}
+
+.timer-controls{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  gap:12px;
+  padding:clamp(10px,1.8dvh,20px) 16px clamp(14px,2.4dvh,26px);
+  flex-wrap:wrap;
+  z-index:5;
+}
+.timer-controls button{
+  min-width:clamp(104px,16vw,160px);
+  padding:clamp(12px,1.8dvh,16px) clamp(18px,2.5vw,28px);
+  font-size:clamp(15px,1.8vw,19px);
+  letter-spacing:1.2px;
+  border-radius:12px;
+}
+
+/* Modale di conferma uscita */
+.modal-backdrop{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.72);
+  backdrop-filter:blur(4px);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+  z-index:50;
+}
+.modal-backdrop.open{display:flex}
+.modal-box{
+  width:100%;
+  max-width:380px;
+  background:var(--panel);
+  border:1px solid #353944;
+  border-radius:16px;
+  padding:22px;
+  text-align:center;
+  box-shadow:0 20px 50px rgba(0,0,0,.6);
+}
+.modal-box h3{margin:0 0 8px;font-size:18px;letter-spacing:.5px}
+.modal-box p{margin:0 0 20px;color:var(--muted);font-size:14px;line-height:1.45}
+.modal-actions{display:flex;gap:10px;justify-content:center}
+.modal-actions button{flex:1;padding:12px}
+
+/* ===== ADATTAMENTI MOBILE ===== */
+@media (max-width:640px){
+  .brandtext{font-size:17px;letter-spacing:1.4px}
+  .brand img{height:34px;max-width:110px}
+  .mode-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .launch-bar{position:sticky;bottom:10px;z-index:8;box-shadow:0 10px 30px rgba(0,0,0,.65)}
+  .go-timer-btn{width:100%;min-width:0}
+  .timer-topbar .brandtext{display:none}
+  .topbar-btn{padding:8px 11px;font-size:12px}
+  .countwrap{--d:min(74cqw,42dvh)}
+  .countwrap .time{font-size:min(28cqw,34dvh)}
+  .phase{font-size:clamp(22px,6.5vw,38px);letter-spacing:3px}
+  .sub{font-size:clamp(14px,4.2vw,24px);letter-spacing:1.2px}
+  .pbar{width:92%;height:12px}
+  .timer-controls{gap:8px;padding:10px 12px 16px}
+  .timer-controls button{flex:1;min-width:90px;padding:14px 10px;font-size:15px}
+}
+
+/* Mobile orizzontale (landscape compatto) */
+@media (max-height:500px) and (orientation:landscape){
+  .timer-topbar{padding:6px 14px}
+  .timer-topbar .brandtext{display:block;font-size:16px}
+  .phase{font-size:clamp(18px,5.5dvh,30px);padding-bottom:2px}
+  .countwrap{--d:50dvh}
+  .countwrap .time{font-size:min(26cqw,46dvh)}
+  .below{padding-top:4px;gap:4px}
+  .pbar{width:64%;height:10px}
+  .sub{font-size:clamp(13px,4.5dvh,22px)}
+  .round,.timerpanel.emom-mode .round,.timerpanel.tabata-mode .round,.timerpanel.interval-mode .round{font-size:clamp(18px,6dvh,32px)}
+  .timer-controls{padding:6px 14px 10px;gap:8px}
+  .timer-controls button{padding:9px 16px;font-size:14px;min-width:100px}
+}
+</style>
+</head>
+<body class="page-settings">
+
+<!-- ==================== PAGINA 1: IMPOSTAZIONI ==================== -->
+<div class="page" id="settingsPage">
+  <header class="top-header">
+    <div class="brand" id="brandSettings">
+      <div class="brandtext">7 KINGS CROSSFIT</div>
+    </div>
+    <div class="headerbuttons">
+      <button id="logoBtn" type="button">Carica logo</button>
+      <input id="logoFile" type="file" accept="image/*" hidden>
+    </div>
+  </header>
+
+  <main class="settings-wrap">
+    <section class="section-card">
+      <h2 class="section-title">1. Scegli la modalità</h2>
+      <div class="mode-grid" id="modeGrid">
+        <button type="button" class="mode-card active" data-mode="amrap"><span class="m-name">AMRAP</span><span class="m-desc">As Many Rounds As Possible</span></button>
+        <button type="button" class="mode-card" data-mode="emom"><span class="m-name">EMOM</span><span class="m-desc">Every Minute On the Minute</span></button>
+        <button type="button" class="mode-card" data-mode="tabata"><span class="m-name">TABATA</span><span class="m-desc">20s lavoro / 10s recupero</span></button>
+        <button type="button" class="mode-card" data-mode="interval"><span class="m-name">INTERVALLI</span><span class="m-desc">Lavoro e recupero custom</span></button>
+        <button type="button" class="mode-card" data-mode="fortime"><span class="m-name">FOR TIME</span><span class="m-desc">Cronometro con time cap</span></button>
+        <button type="button" class="mode-card" data-mode="countdown"><span class="m-name">COUNTDOWN</span><span class="m-desc">Conto alla rovescia</span></button>
+        <button type="button" class="mode-card" data-mode="stopwatch"><span class="m-name">CRONOMETRO</span><span class="m-desc">Tempo crescente libero</span></button>
+      </div>
+    </section>
+
+    <section class="section-card">
+      <h2 class="section-title">2. Parametri workout</h2>
+      <div id="fields"></div>
+      <div class="presets" id="presets"></div>
+    </section>
+
+    <section class="section-card">
+      <h2 class="section-title">3. Countdown di partenza</h2>
+      <div class="delay-row">
+        <input id="startDelay" type="number" min="0" max="60" value="3" aria-label="Countdown di partenza in secondi">
+        <div class="delay-chips" id="delayChips">
+          <button type="button" data-d="0">0s</button>
+          <button type="button" data-d="3" class="chip-active">3s</button>
+          <button type="button" data-d="5">5s</button>
+          <button type="button" data-d="10">10s</button>
+        </div>
+      </div>
+      <p class="hint">Scorciatoie da PC nella pagina timer: <strong>Spazio</strong> Avvia/Pausa · <strong>R</strong> Reset · <strong>F</strong> Schermo intero · <strong>Esc</strong> Impostazioni.</p>
+    </section>
+
+    <section class="launch-bar">
+      <div class="summary-info">
+        <span class="summary-label">Workout configurato</span>
+        <span class="summary-text" id="summaryText">AMRAP · 12 min</span>
+      </div>
+      <button type="button" class="primary go-timer-btn" id="goTimer">VAI AL TIMER ▶</button>
+    </section>
+  </main>
+</div>
+
+<!-- ==================== PAGINA 2: TIMER ==================== -->
+<div class="page" id="timerPage">
+  <header class="timer-topbar">
+    <button type="button" class="topbar-btn" id="backBtn">‹ IMPOSTAZIONI</button>
+    <div class="brand" id="brandTimer">
+      <div class="brandtext">7 KINGS CROSSFIT</div>
+    </div>
+    <div class="topbar-actions">
+      <button type="button" class="topbar-btn" id="soundBtn" title="Attiva/Disattiva audio">AUDIO ON</button>
+      <button type="button" class="topbar-btn" id="fsBtn" title="Schermo intero / Modalità TV">SCHERMO INTERO</button>
+    </div>
+  </header>
+
+  <section class="timerpanel" id="timerpanel">
+    <div class="phase" id="phase">READY</div>
+    <div class="countwrap" id="countwrap">
+      <svg class="count-ring" viewBox="0 0 100 100" aria-hidden="true">
+        <circle id="ring" cx="50" cy="50" r="44"></circle>
+      </svg>
+      <div class="time" id="time">00:00</div>
+    </div>
+    <div class="below">
+      <div class="pbar off" id="pbar"><div id="pfill"></div></div>
+      <div class="sub" id="sub">PREMI START PER INIZIARE</div>
+      <div class="round" id="round"></div>
+    </div>
+  </section>
+
+  <footer class="timer-controls">
+    <button type="button" class="primary" id="start">START</button>
+    <button type="button" id="pause" disabled>PAUSA</button>
+    <button type="button" id="resetMain">RESET</button>
+  </footer>
+</div>
+
+<!-- Modale conferma uscita -->
+<div class="modal-backdrop" id="confirmModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+  <div class="modal-box">
+    <h3 id="modalTitle">Interrompere il timer?</h3>
+    <p>Tornando alle impostazioni il workout in corso verrà azzerato.</p>
+    <div class="modal-actions">
+      <button type="button" id="cancelExit">Resta nel timer</button>
+      <button type="button" class="primary" id="confirmExit">Torna indietro</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+const fields = $('fields');
+const presets = $('presets');
+const phaseEl = $('phase');
+const timeEl = $('time');
+const subEl = $('sub');
+const roundEl = $('round');
+const panel = $('timerpanel');
+const countwrap = $('countwrap');
+const ring = $('ring');
+const summaryText = $('summaryText');
+const ringCirc = 2 * Math.PI * 44;
+ring.style.strokeDasharray = ringCirc;
+ring.style.strokeDashoffset = ringCirc;
+
+let currentMode = 'amrap';
+let soundEnabled = true;
+let audioCtx = null;
+let wakeLock = null;
+
+let state = {
+  mode: 'amrap',
+  running: false,
+  paused: false,
+  started: false,
+  elapsed: 0,
+  remaining: 0,
+  total: 720,
+  every: 60,
+  totalBlocks: 12,
+  work: 20,
+  rest: 10,
+  totalRounds: 8,
+  cap: 1200,
+  round: 1,
+  phase: 'READY',
+  delayRemaining: 0,
+  lastBeep: 0,
+  lastTick: 0,
+  raf: null
+};
+
+function fmt(sec){
+  sec = Math.max(0, Math.floor(sec));
+  return `${String(Math.floor(sec/60)).padStart(2,'0')}:${String(sec%60).padStart(2,'0')}`;
+}
+function fmtCeil(sec){
+  sec = Math.max(0, Math.ceil(sec - 1e-7));
+  return `${String(Math.floor(sec/60)).padStart(2,'0')}:${String(sec%60).padStart(2,'0')}`;
+}
+
+/* ===== AUDIO UNICO COMPATIBILE MOBILE ===== */
+function unlockAudio(){
+  try{
+    if(!audioCtx){
+      const Ctx = window.AudioContext || window.webkitAudioContext;
+      if(Ctx) audioCtx = new Ctx();
+    }
+    if(audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+  }catch(e){}
+}
+function beep(freq = 850, dur = 150){
+  if(!soundEnabled) return;
+  try{
+    unlockAudio();
+    if(!audioCtx) return;
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.type = 'sine';
+    o.frequency.value = freq;
+    o.connect(g);
+    g.connect(audioCtx.destination);
+    g.gain.setValueAtTime(0.14, audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur / 1000);
+    o.start();
+    o.stop(audioCtx.currentTime + dur / 1000);
+  }catch(e){}
+}
+
+/* ===== WAKE LOCK ===== */
+async function keepAwake(){
+  try{
+    if('wakeLock' in navigator && !wakeLock){
+      wakeLock = await navigator.wakeLock.request('screen');
+      wakeLock.addEventListener('release', () => { wakeLock = null; });
+    }
+  }catch(e){}
+}
+function releaseAwake(){
+  try{
+    if(wakeLock){ wakeLock.release(); wakeLock = null; }
+  }catch(e){}
+}
+document.addEventListener('visibilitychange', () => {
+  if(document.visibilityState === 'visible' && (state.running || state.paused)) keepAwake();
+});
+
+/* ===== RENDER CAMPI IMPOSTAZIONI ===== */
+function renderFields(){
+  const m = currentMode;
+  let html = '';
+  if(m === 'amrap'){
+    html = '<div class="field-group"><label for="duration">Durata AMRAP (minuti)</label><input id="duration" type="number" min="1" value="12"></div>';
+  }else if(m === 'emom'){
+    html = '<div class="row"><div class="field-group"><label for="duration">Durata totale (min)</label><input id="duration" type="number" min="1" value="12"></div><div class="field-group"><label for="every">Ogni (secondi)</label><input id="every" type="number" min="1" value="60"></div></div>';
+  }else if(m === 'tabata'){
+    html = '<div class="field-group"><label for="rounds">Numero di round</label><input id="rounds" type="number" min="1" value="8"><p class="hint">Protocollo fisso: 20s lavoro / 10s recupero.</p></div>';
+  }else if(m === 'interval'){
+    html = '<div class="row"><div class="field-group"><label for="work">Lavoro (secondi)</label><input id="work" type="number" min="1" value="40"></div><div class="field-group"><label for="rest">Recupero (secondi)</label><input id="rest" type="number" min="0" value="20"></div></div><div class="field-group"><label for="rounds">Numero di round</label><input id="rounds" type="number" min="1" value="8"></div>';
+  }else if(m === 'fortime'){
+    html = '<div class="field-group"><label for="cap">Time cap (minuti, 0 = senza cap)</label><input id="cap" type="number" min="0" value="20"></div>';
+  }else if(m === 'countdown'){
+    html = '<div class="field-group"><label for="duration">Countdown (minuti)</label><input id="duration" type="number" min="1" value="5"></div>';
+  }else if(m === 'stopwatch'){
+    html = '<p class="hint">Cronometro crescente libero senza limite di tempo.</p>';
+  }
+  fields.innerHTML = html;
+
+  const presetMap = {
+    amrap: [['10','10 min'],['12','12 min'],['15','15 min'],['20','20 min']],
+    emom: [['10','10 min'],['12','12 min'],['16','16 min'],['20','20 min']],
+    tabata: [['8','8 round'],['10','10 round'],['12','12 round']],
+    interval: [['6','6 round'],['8','8 round'],['10','10 round'],['12','12 round']],
+    fortime: [['0','Senza cap'],['12','12 min'],['15','15 min'],['20','20 min']],
+    countdown: [['3','3 min'],['5','5 min'],['10','10 min'],['15','15 min']],
+    stopwatch: []
+  };
+  presets.innerHTML = (presetMap[m] || [])
+    .map(([v, label]) => `<button type="button" data-v="${v}">${label}</button>`)
+    .join('');
+
+  presets.querySelectorAll('button').forEach(btn => {
+    btn.onclick = () => {
+      const target = (m === 'interval') ? $('rounds') : fields.querySelector('input');
+      if(target){
+        target.value = btn.dataset.v;
+        updateSummary();
+      }
+    };
+  });
+
+  fields.querySelectorAll('input').forEach(inp => {
+    inp.addEventListener('input', updateSummary);
+  });
+
+  updateSummary();
+}
+
+function updateSummary(){
+  const m = currentMode;
+  const v = id => Math.max(0, Number($(id)?.value || 0));
+  const d = Math.max(0, Number($('startDelay').value || 0));
+  let text = '';
+  if(m === 'amrap') text = `AMRAP · ${v('duration') || 1} min`;
+  else if(m === 'emom') text = `EMOM · ${v('duration') || 1} min (ogni ${v('every') || 60}s)`;
+  else if(m === 'tabata') text = `TABATA · ${v('rounds') || 8} round (20s/10s)`;
+  else if(m === 'interval') text = `INTERVALLI · ${v('rounds') || 8} round (${v('work') || 40}s / ${v('rest')}s)`;
+  else if(m === 'fortime') text = v('cap') > 0 ? `FOR TIME · Time Cap ${v('cap')} min` : 'FOR TIME · Senza cap';
+  else if(m === 'countdown') text = `COUNTDOWN · ${v('duration') || 1} min`;
+  else text = 'CRONOMETRO LIBERO';
+
+  if(d > 0) text += ` · Start ${d}s`;
+  summaryText.textContent = text;
+}
+
+$('modeGrid').querySelectorAll('.mode-card').forEach(card => {
+  card.onclick = () => {
+    $('modeGrid').querySelectorAll('.mode-card').forEach(c => c.classList.remove('active'));
+    card.classList.add('active');
+    currentMode = card.dataset.mode;
+    renderFields();
+  };
+});
+
+$('delayChips').querySelectorAll('button').forEach(btn => {
+  btn.onclick = () => {
+    $('startDelay').value = btn.dataset.d;
+    syncDelayChips();
+    updateSummary();
+  };
+});
+$('startDelay').addEventListener('input', () => {
+  syncDelayChips();
+  updateSummary();
+});
+function syncDelayChips(){
+  const val = String($('startDelay').value);
+  $('delayChips').querySelectorAll('button').forEach(b => {
+    b.classList.toggle('chip-active', b.dataset.d === val);
+  });
+}
+
+/* ===== LOGICA TIMER ===== */
+function configure(){
+  state.mode = currentMode;
+  state.elapsed = 0;
+  state.round = 1;
+  state.started = false;
+  state.phase = 'READY';
+  state.running = false;
+  state.paused = false;
+  state.lastBeep = 0;
+  state.delayRemaining = 0;
+
+  const v = id => Number($(id)?.value || 0);
+  if(state.mode === 'amrap'){
+    state.total = Math.max(1, v('duration')) * 60;
+    state.remaining = state.total;
+  }else if(state.mode === 'emom'){
+    state.total = Math.max(1, v('duration')) * 60;
+    state.remaining = state.total;
+    state.every = Math.max(1, v('every') || 60);
+    state.totalBlocks = Math.ceil(state.total / state.every);
+  }else if(state.mode === 'tabata'){
+    state.totalRounds = Math.max(1, v('rounds') || 8);
+    state.work = 20;
+    state.rest = 10;
+    state.remaining = 20;
+  }else if(state.mode === 'interval'){
+    state.totalRounds = Math.max(1, v('rounds') || 8);
+    state.work = Math.max(1, v('work') || 40);
+    state.rest = Math.max(0, v('rest'));
+    state.remaining = state.work;
+  }else if(state.mode === 'fortime'){
+    state.cap = Math.max(0, v('cap')) * 60;
+    state.remaining = state.cap;
+    state.total = state.cap;
+  }else if(state.mode === 'countdown'){
+    state.remaining = Math.max(1, v('duration')) * 60;
+    state.total = state.remaining;
+  }else{
+    state.remaining = 0;
+  }
+
+  ring.style.strokeDashoffset = ringCirc;
+  display();
+  $('start').disabled = false;
+  $('start').textContent = 'START';
+  $('pause').disabled = true;
+}
+
+function updateBar(){
+  const bar = $('pbar'), fill = $('pfill'), m = state.mode;
+  let prog = 0, rem = Infinity, dur = Infinity, show = true;
+  if(state.phase === 'STARTING') show = false;
+  else if(state.phase === 'DONE'){ prog = 1; rem = 0; }
+  else if(m === 'amrap' || m === 'countdown'){
+    dur = state.total;
+    rem = m === 'amrap' ? state.total - state.elapsed : state.remaining;
+    prog = dur ? 1 - rem / dur : 0;
+  }else if(m === 'fortime'){
+    if(state.cap > 0){
+      dur = state.cap;
+      rem = state.cap - state.elapsed;
+      prog = 1 - rem / dur;
+    }else show = false;
+  }else if(m === 'emom'){
+    const every = state.every || 60;
+    const blockStart = Math.floor(state.elapsed / every) * every;
+    dur = Math.min(every, state.total - blockStart);
+    const e = state.elapsed - blockStart;
+    rem = dur - e;
+    prog = dur ? e / dur : 0;
+  }else if(m === 'tabata' || m === 'interval'){
+    dur = state.phase === 'REST' ? state.rest : state.work;
+    rem = state.remaining;
+    prog = dur ? 1 - rem / dur : 0;
+  }else show = false;
+
+  prog = Math.min(1, Math.max(0, prog || 0));
+  const thr = dur > 10 ? 10 : 3;
+  bar.classList.toggle('off', !show);
+  fill.style.width = (prog * 100) + '%';
+  fill.classList.toggle('danger', show && rem <= thr && state.phase !== 'READY');
+}
+
+function display(){
+  const m = state.mode;
+  let t = state.remaining;
+
+  phaseEl.textContent = state.paused ? 'PAUSED' : state.phase;
+  countwrap.classList.toggle('counting', state.phase === 'STARTING');
+
+  panel.className = 'timerpanel ' +
+    (m === 'emom' ? 'emom-mode ' : '') +
+    (m === 'tabata' ? 'tabata-mode ' : '') +
+    (m === 'interval' ? 'interval-mode ' : '') +
+    (state.running ? 'running ' : '') +
+    (state.paused ? 'paused ' : '') +
+    (state.phase === 'REST' ? 'rest ' : '') +
+    (state.phase === 'WORK' ? 'work ' : '') +
+    (state.phase === 'DONE' ? 'finished ' : '');
+
+  if(state.phase !== 'STARTING'){
+    if(m === 'stopwatch' || m === 'fortime' || m === 'amrap') t = state.elapsed;
+    else if(m === 'emom') t = state.elapsed % state.every;
+    else if(m === 'interval' || m === 'tabata') t = state.remaining;
+
+    timeEl.textContent = (m === 'countdown' || m === 'tabata' || m === 'interval')
+      ? fmtCeil(t)
+      : fmt(t);
+
+    if(m === 'amrap') subEl.textContent = `TEMPO TRASCORSO · ${fmt(Math.max(0, state.total - state.elapsed))} RIMANENTI`;
+    else if(m === 'emom') subEl.textContent = `TEMPO DEL BLOCCO · ${fmt(Math.max(0, state.total - state.elapsed))} TOTALI`;
+    else if(m === 'tabata' || m === 'interval') subEl.textContent = state.phase === 'REST' ? 'RECUPERO' : (state.phase === 'READY' ? 'PRONTO AL LAVORO' : 'LAVORO');
+    else if(m === 'fortime') subEl.textContent = state.cap ? `TIME CAP · ${fmt(Math.max(0, state.cap - state.elapsed))} RIMANENTI` : 'TEMPO TRASCORSO';
+    else if(m === 'countdown') subEl.textContent = 'COUNTDOWN';
+    else subEl.textContent = 'TEMPO TRASCORSO';
+
+    roundEl.textContent = (m === 'tabata' || m === 'interval')
+      ? `ROUND ${Math.min(state.round, state.totalRounds)} / ${state.totalRounds}`
+      : m === 'emom'
+        ? `BLOCCO ${Math.min(state.totalBlocks, Math.floor(state.elapsed / state.every) + 1)} / ${state.totalBlocks}`
+        : '';
+  }
+  updateBar();
+}
+
+function finish(){
+  releaseAwake();
+  state.running = false;
+  state.paused = false;
+  state.phase = 'DONE';
+  state.remaining = 0;
+  display();
+  $('start').disabled = true;
+  $('pause').disabled = true;
+  beep(500, 650);
+}
+
+function step(){
+  if(!state.running) return;
+  const now = Date.now();
+  const dt = (now - state.lastTick) / 1000;
+  state.lastTick = now;
+  state.elapsed += dt;
+  const m = state.mode;
+
+  if(m === 'stopwatch'){
+    state.remaining = state.elapsed;
+  }else if(m === 'amrap'){
+    state.remaining = state.total - state.elapsed;
+    if(state.remaining <= 0){ finish(); return; }
+  }else if(m === 'emom'){
+    state.remaining = state.total - state.elapsed;
+    if(state.remaining <= 0){ finish(); return; }
+    const blockIdx = Math.floor(state.elapsed / state.every);
+    if(blockIdx > state.round - 1){
+      state.round = blockIdx + 1;
+      beep(920, 180);
+    }
+  }else if(m === 'fortime'){
+    state.remaining = state.cap ? state.cap - state.elapsed : 0;
+    if(state.cap > 0 && state.elapsed >= state.cap){ finish(); return; }
+  }else if(m === 'countdown'){
+    state.remaining -= dt;
+    if(state.remaining <= 0){ finish(); return; }
+  }else if(m === 'tabata' || m === 'interval'){
+    state.remaining -= dt;
+    if(state.remaining <= 0){
+      if(state.phase === 'WORK' && state.rest > 0){
+        state.phase = 'REST';
+        state.remaining = state.rest;
+        beep(600, 220);
+      }else{
+        if(state.phase === 'REST' || state.rest === 0) state.round++;
+        if(state.round > state.totalRounds){ finish(); return; }
+        state.phase = 'WORK';
+        state.remaining = state.work;
+        beep(980, 220);
+      }
+    }
+  }
+
+  display();
+  state.raf = requestAnimationFrame(step);
+}
+
+function start(){
+  unlockAudio();
+  keepAwake();
+  if(state.running) return;
+
+  if(state.paused && state.phase === 'STARTING'){
+    state.running = true;
+    state.paused = false;
+    state.lastTick = Date.now();
+    $('start').disabled = true;
+    $('pause').disabled = false;
+    delayTick();
+    return;
+  }
+  if(state.paused){
+    state.running = true;
+    state.paused = false;
+    state.lastTick = Date.now();
+    $('start').disabled = true;
+    $('pause').disabled = false;
+    display();
+    state.raf = requestAnimationFrame(step);
+    return;
+  }
+
+  if(!state.started){
+    configure();
+    state.started = true;
+    const delay = Math.max(0, Number($('startDelay').value || 0));
+    if(delay > 0){
+      state.phase = 'STARTING';
+      state.delayRemaining = delay;
+      state.running = true;
+      state.lastTick = Date.now();
+      $('start').disabled = true;
+      $('pause').disabled = false;
+      display();
+      delayTick();
+      return;
+    }
+  }
+  startWorkout();
+}
+
+function startWorkout(){
+  state.phase = (state.mode === 'interval' || state.mode === 'tabata') ? 'WORK' : 'RUNNING';
+  state.running = true;
+  state.paused = false;
+  state.lastTick = Date.now();
+  $('start').disabled = true;
+  $('pause').disabled = false;
+  beep(1250, 260);
+  display();
+  state.raf = requestAnimationFrame(step);
+}
+
+function delayTick(){
+  if(!state.running) return;
+  const now = Date.now();
+  const dt = (now - state.lastTick) / 1000;
+  state.lastTick = now;
+  state.delayRemaining -= dt;
+
+  const shown = Math.max(0, Math.ceil(state.delayRemaining));
+  state.phase = 'STARTING';
+  phaseEl.textContent = 'STARTING';
+  timeEl.textContent = String(shown);
+  subEl.textContent = 'PREPARATI';
+  roundEl.textContent = '';
+
+  const initialDelay = Math.max(1, Number($('startDelay').value || 1));
+  const progress = Math.min(1, Math.max(0, 1 - state.delayRemaining / initialDelay));
+  ring.style.strokeDashoffset = ringCirc * (1 - progress);
+
+  if(shown <= 3 && shown >= 1 && shown !== state.lastBeep){
+    state.lastBeep = shown;
+    beep(700 + shown * 100, 130);
+  }
+  if(state.delayRemaining <= 0){
+    ring.style.strokeDashoffset = 0;
+    state.running = false;
+    state.lastBeep = 0;
+    startWorkout();
+    return;
+  }
+  state.raf = requestAnimationFrame(delayTick);
+}
+
+function pause(){
+  if(!state.running) return;
+  state.running = false;
+  state.paused = true;
+  cancelAnimationFrame(state.raf);
+  $('start').disabled = false;
+  $('start').textContent = 'RIPRENDI';
+  $('pause').disabled = true;
+  display();
+}
+
+function reset(){
+  releaseAwake();
+  cancelAnimationFrame(state.raf);
+  countwrap.classList.remove('counting');
+  configure();
+}
+
+/* ===== NAVIGAZIONE 2 PAGINE (PC + MOBILE) ===== */
+const isTimerPage = () => document.body.classList.contains('page-timer');
+const timerBusy = () => state.started && (state.running || state.paused);
+
+function showTimerPage(){
+  unlockAudio();
+  reset();
+  document.body.classList.remove('page-settings');
+  document.body.classList.add('page-timer');
+  window.scrollTo(0, 0);
+  try{ history.pushState({ page: 'timer' }, ''); }catch(e){}
+}
+
+function showSettingsPage(){
+  closeConfirmModal();
+  reset();
+  document.body.classList.remove('page-timer');
+  document.body.classList.add('page-settings');
+  try{ if(document.fullscreenElement && document.exitFullscreen) document.exitFullscreen(); }catch(e){}
+  window.scrollTo(0, 0);
+}
+
+function requestExitTimer(){
+  if(timerBusy()){
+    $('confirmModal').classList.add('open');
+  }else{
+    showSettingsPage();
+  }
+}
+function closeConfirmModal(){
+  $('confirmModal').classList.remove('open');
+}
+
+$('goTimer').onclick = showTimerPage;
+$('backBtn').onclick = requestExitTimer;
+$('cancelExit').onclick = closeConfirmModal;
+$('confirmExit').onclick = showSettingsPage;
+$('confirmModal').onclick = e => { if(e.target === $('confirmModal')) closeConfirmModal(); };
+
+window.addEventListener('popstate', () => {
+  if(!isTimerPage()) return;
+  if(timerBusy()){
+    try{ history.pushState({ page: 'timer' }, ''); }catch(e){}
+    $('confirmModal').classList.add('open');
+    return;
+  }
+  showSettingsPage();
+});
+
+/* ===== CONTROLLI TIMER, AUDIO & FULLSCREEN ===== */
+$('start').onclick = start;
+$('pause').onclick = pause;
+$('resetMain').onclick = reset;
+
+$('soundBtn').onclick = () => {
+  soundEnabled = !soundEnabled;
+  $('soundBtn').textContent = soundEnabled ? 'AUDIO ON' : 'AUDIO OFF';
+  $('soundBtn').classList.toggle('muted', !soundEnabled);
+  if(soundEnabled) beep(880, 90);
+};
+
+async function toggleFullscreen(){
+  try{
+    if(!document.fullscreenElement){
+      await document.documentElement.requestFullscreen({ navigationUI: 'hide' });
+    }else{
+      await document.exitFullscreen();
+    }
+  }catch(e){}
+}
+$('fsBtn').onclick = toggleFullscreen;
+document.addEventListener('fullscreenchange', () => {
+  $('fsBtn').textContent = document.fullscreenElement ? 'ESCI FULLSCREEN' : 'SCHERMO INTERO';
+});
+
+/* ===== SCORCIATOIE DA TASTIERA (PC) ===== */
+document.addEventListener('keydown', e => {
+  if(!isTimerPage()) return;
+  if($('confirmModal').classList.contains('open')){
+    if(e.key === 'Escape') closeConfirmModal();
+    return;
+  }
+  if(e.code === 'Space'){
+    e.preventDefault();
+    if(state.running) pause();
+    else if(!$('start').disabled) start();
+  }else if(e.key === 'r' || e.key === 'R'){
+    e.preventDefault();
+    reset();
+  }else if(e.key === 'f' || e.key === 'F'){
+    e.preventDefault();
+    toggleFullscreen();
+  }else if(e.key === 'Escape' && !document.fullscreenElement){
+    requestExitTimer();
+  }
+});
+
+/* ===== LOGO PERSONALIZZATO (SINCRONIZZATO SU ENTRAMBE LE PAGINE) ===== */
+function applyLogo(dataUrl){
+  ['brandSettings', 'brandTimer'].forEach(id => {
+    const container = $(id);
+    const old = container.querySelector('.brandlogo');
+    if(old) old.remove();
+    if(dataUrl){
+      const img = document.createElement('img');
+      img.src = dataUrl;
+      img.alt = 'Logo 7 Kings CrossFit';
+      img.className = 'brandlogo';
+      container.insertBefore(img, container.firstChild);
+    }
+  });
+}
+$('logoBtn').onclick = () => $('logoFile').click();
+$('logoFile').onchange = e => {
+  const f = e.target.files[0];
+  if(!f) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    applyLogo(reader.result);
+    try{ localStorage.setItem('7k-logo', reader.result); }catch(err){}
+  };
+  reader.readAsDataURL(f);
+};
+try{
+  const savedLogo = localStorage.getItem('7k-logo');
+  if(savedLogo) applyLogo(savedLogo);
+}catch(e){}
+
+/* Init */
+renderFields();
+configure();
+if('serviceWorker' in navigator && location.protocol.indexOf('http') === 0){
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+</script>
+</body>
+</html>
